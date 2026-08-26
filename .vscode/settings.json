@@ -1,17 +1,12 @@
 {
   "editor.formatOnSave": true,
   "editor.tabSize": 2,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[python]": {
-    "editor.tabSize": 4,
-    "editor.defaultFormatter": "ms-python.black-formatter"
+    "editor.tabSize": 4
   },
-  "python.defaultInterpreterPath": "C:\\Program Files\\Python314\\python.exe",
   "python.analysis.extraPaths": [
     "${workspaceFolder}",
-    "${workspaceFolder}/backend",
-    "C:\\Users\\ABIR CHATTERJEE\\AppData\\Roaming\\Python\\Python314\\site-packages",
-    "C:\\Program Files\\Python314\\Lib\\site-packages"
+    "${workspaceFolder}/backend"
   ],
   "python.analysis.typeCheckingMode": "basic",
   "css.lint.unknownAtRules": "ignore",

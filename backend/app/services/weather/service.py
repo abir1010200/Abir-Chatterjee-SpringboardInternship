@@ -85,28 +85,31 @@ class WeatherService:
 
         # 2. Query Primary / Secondary Adapters
         result: Optional[WeatherResult] = None
+        lat = float(field.latitude)
+        lon = float(field.longitude)
+        f_id = int(field.id)
 
         if settings.OPENWEATHER_API_KEY:
             try:
-                logger.info(f"Querying OpenWeather API for Field {field.id} ({field.latitude}, {field.longitude})...")
-                result = await self.openweather_adapter.get_current_and_forecast(field.latitude, field.longitude)
+                logger.info(f"Querying OpenWeather API for Field {f_id} ({lat}, {lon})...")
+                result = await self.openweather_adapter.get_current_and_forecast(lat, lon)
             except Exception as e:
-                logger.warning(f"OpenWeather API failed for Field {field.id}: {e}. Trying Tomorrow.io fallback.")
+                logger.warning(f"OpenWeather API failed for Field {f_id}: {e}. Trying Tomorrow.io fallback.")
 
         if not result and settings.TOMORROW_API_KEY:
             try:
-                logger.info(f"Querying Tomorrow.io API for Field {field.id}...")
-                result = await self.tomorrow_adapter.get_current_and_forecast(field.latitude, field.longitude)
+                logger.info(f"Querying Tomorrow.io API for Field {f_id}...")
+                result = await self.tomorrow_adapter.get_current_and_forecast(lat, lon)
             except Exception as e:
-                logger.warning(f"Tomorrow.io API failed for Field {field.id}: {e}.")
+                logger.warning(f"Tomorrow.io API failed for Field {f_id}: {e}.")
 
         if not result:
-            logger.info(f"Using physical weather synthesizer fallback for Field {field.id} ({field.name})")
-            result = self._generate_realistic_fallback(field.latitude, field.longitude)
+            logger.info(f"Using physical weather synthesizer fallback for Field {f_id} ({field.name})")
+            result = self._generate_realistic_fallback(lat, lon)
 
         # 3. Persist to database
         db_weather = WeatherData(
-            field_id=field.id,
+            field_id=f_id,
             temperature=result.temperature,
             humidity=result.humidity,
             rainfall_1h=result.rainfall_1h,
@@ -124,16 +127,16 @@ class WeatherService:
             db.commit()
             db.refresh(db_weather)
             logger.info(
-                f"Stored weather record id={db_weather.id} for field={field.id}: "
+                f"Stored weather record id={db_weather.id} for field={f_id}: "
                 f"temp={db_weather.temperature}°C, rain_prob={db_weather.rain_probability}%, provider={db_weather.provider}"
             )
         except Exception as e:
             db.rollback()
-            logger.error(f"Failed to persist weather data for field {field.id}: {e}")
+            logger.error(f"Failed to persist weather data for field {f_id}: {e}")
             raise
 
         # 4. Update cache
-        self._cache[field.id] = {
+        self._cache[f_id] = {
             "db_record": db_weather,
             "expires_at": now + self.cache_ttl
         }

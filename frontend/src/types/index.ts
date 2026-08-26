@@ -16,6 +16,8 @@ export interface Field {
   size_hectares: number;
   soil_type: string;
   created_at: string;
+  crops?: Crop[];
+  sensors?: Sensor[];
 }
 
 export interface Crop {
