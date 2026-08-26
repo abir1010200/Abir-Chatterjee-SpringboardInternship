@@ -30,13 +30,16 @@ def create_sensor_reading(
     """
     try:
         reading, is_duplicate = ingest_sensor_reading(db=db, payload=payload, source="rest")
+        r_id: int = int(getattr(reading, "id"))
+        s_id: str = str(getattr(reading, "sensor_id"))
+        ts: datetime = getattr(reading, "timestamp")
         return IngestionResult(
             status="duplicate" if is_duplicate else "success",
             message="Duplicate reading acknowledged" if is_duplicate else "Reading successfully ingested",
-            reading_id=reading.id,
-            sensor_id=reading.sensor_id,
+            reading_id=r_id,
+            sensor_id=s_id,
             is_duplicate=is_duplicate,
-            timestamp=reading.timestamp
+            timestamp=ts
         )
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(ve))
@@ -57,14 +60,17 @@ def create_sensor_readings_batch(
     for item in payload.readings:
         try:
             reading, is_dup = ingest_sensor_reading(db=db, payload=item, source="rest_batch")
+            r_id: int = int(getattr(reading, "id"))
+            s_id: str = str(getattr(reading, "sensor_id"))
+            ts: datetime = getattr(reading, "timestamp")
             results.append(
                 IngestionResult(
                     status="duplicate" if is_dup else "success",
                     message="Duplicate acknowledged" if is_dup else "Ingested",
-                    reading_id=reading.id,
-                    sensor_id=reading.sensor_id,
+                    reading_id=r_id,
+                    sensor_id=s_id,
                     is_duplicate=is_dup,
-                    timestamp=reading.timestamp
+                    timestamp=ts
                 )
             )
         except Exception as e:
