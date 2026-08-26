@@ -65,7 +65,7 @@ docker-compose up --build
 ## 📋 Milestone 1 Success Criteria Checklist
 - [x] **Project environment configured** (Section 2)
 - [x] **GitHub / Git repository created** (Section 2)
-- [ ] **Database schema completed** (Section 3)
+- [x] **Database schema completed** (Section 3)
 - [ ] **Sensor data ingestion working** (Section 4)
 - [ ] **Simulated sensor data available** (Section 5)
 - [ ] **Weather API integrated** (Section 7)
