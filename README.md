@@ -67,7 +67,7 @@ docker-compose up --build
 - [x] **GitHub / Git repository created** (Section 2)
 - [x] **Database schema completed** (Section 3)
 - [x] **Sensor data ingestion working** (Section 4)
-- [ ] **Simulated sensor data available** (Section 5)
+- [x] **Simulated sensor data available** (Section 5)
 - [ ] **Weather API integrated** (Section 7)
 - [ ] **Farmer, field, crop, and sensor configuration implemented** (Section 8)
 - [ ] **Data validation and cleaning implemented** (Sections 9 & 10)
