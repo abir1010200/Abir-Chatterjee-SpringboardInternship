@@ -1,11 +1,12 @@
 import logging
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from backend.app.db.session import get_db
 from backend.app.models.sensor import Sensor
 from backend.app.models.sensor_reading import SensorReading
+from backend.app.models.field import Field
 from backend.app.schemas.sensor_reading import (
     SensorReadingCreate,
     SensorReadingBatchCreate,
@@ -13,6 +14,7 @@ from backend.app.schemas.sensor_reading import (
     IngestionResult,
 )
 from backend.app.services.ingestion import ingest_sensor_reading
+from backend.app.services.sensor_monitor import sensor_monitor
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -77,6 +79,33 @@ def create_sensor_readings_batch(
                 )
             )
     return results
+
+@router.get("/monitoring/health")
+def get_fleet_health(db: Session = Depends(get_db)):
+    """
+    Evaluates IoT fleet health, detects disconnected sensors,
+    and updates active/stale/offline statuses.
+    """
+    return sensor_monitor.evaluate_fleet_status(db=db)
+
+@router.get("/field/{field_id}/history", response_model=List[SensorReadingResponse])
+def get_field_historical_readings(
+    field_id: int,
+    days: int = Query(30, ge=1, le=365, description="Historical lookback window in days"),
+    limit: int = Query(500, ge=1, le=5000),
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieve durable historical time-series sensor readings for an entire agricultural field.
+    Leverages indexed (field_id, timestamp) for rapid multi-day retrieval.
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    readings = db.query(SensorReading).filter(
+        SensorReading.field_id == field_id,
+        SensorReading.timestamp >= cutoff
+    ).order_by(SensorReading.timestamp.desc()).limit(limit).all()
+
+    return readings
 
 @router.get("/{sensor_id}/readings", response_model=List[SensorReadingResponse])
 def get_sensor_readings(

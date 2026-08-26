@@ -1,5 +1,5 @@
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, cast
 from datetime import datetime, timezone, timedelta
 import pandas as pd
 import numpy as np
@@ -26,7 +26,7 @@ class DataCleaningPipeline:
     def clean_sensor_readings(self, db: Session, field_id: int) -> TelemetryValidationReport:
         """Runs the cleaning pipeline on stored sensor readings for a field."""
         report = TelemetryValidationReport()
-        readings = db.query(SensorReading).filter(
+        readings: List[SensorReading] = db.query(SensorReading).filter(
             SensorReading.field_id == field_id
         ).order_by(SensorReading.timestamp.asc()).all()
 
@@ -34,8 +34,8 @@ class DataCleaningPipeline:
         if not readings:
             return report
 
-        timestamps = [r.timestamp for r in readings]
-        moisture_vals = [float(r.soil_moisture) for r in readings]
+        timestamps: List[datetime] = [getattr(r, "timestamp") for r in readings]
+        moisture_vals: List[float] = [float(getattr(r, "soil_moisture")) for r in readings]
 
         # 1. Detect Gaps
         report.gaps_detected = self.validator.detect_telemetry_gaps(timestamps, expected_interval_minutes=15.0)
@@ -50,13 +50,14 @@ class DataCleaningPipeline:
         for i, r in enumerate(readings):
             is_anomaly = outliers[i] or rate_anomalies[i]
             if is_anomaly:
-                r.is_valid = False
-                r.cleaning_flag = "outlier_flagged"
+                setattr(r, "is_valid", False)
+                setattr(r, "cleaning_flag", "outlier_flagged")
                 outlier_count += 1
             else:
-                r.is_valid = True
-                if r.cleaning_flag == "raw":
-                    r.cleaning_flag = "validated"
+                setattr(r, "is_valid", True)
+                current_flag = getattr(r, "cleaning_flag")
+                if current_flag == "raw":
+                    setattr(r, "cleaning_flag", "validated")
                 valid_count += 1
 
         db.commit()
@@ -90,12 +91,12 @@ class DataCleaningPipeline:
             Crop.is_active == True
         ).first()
 
-        kc_factor = float(active_crop.kc_factor) if active_crop else 1.0
-        crop_type = str(active_crop.crop_type) if active_crop else "Standard"
-        growth_stage = str(active_crop.growth_stage) if active_crop else "Vegetative"
+        kc_factor: float = float(getattr(active_crop, "kc_factor", 1.0)) if active_crop else 1.0
+        crop_type: str = str(getattr(active_crop, "crop_type", "Standard")) if active_crop else "Standard"
+        growth_stage: str = str(getattr(active_crop, "growth_stage", "Vegetative")) if active_crop else "Vegetative"
 
         # 2. Fetch Sensor Readings
-        readings = db.query(SensorReading).filter(
+        readings: List[SensorReading] = db.query(SensorReading).filter(
             SensorReading.field_id == field_id,
             SensorReading.is_valid == True
         ).order_by(SensorReading.timestamp.desc()).limit(limit).all()
@@ -104,21 +105,22 @@ class DataCleaningPipeline:
             return []
 
         # 3. Fetch Weather Records
-        weather_records = db.query(WeatherData).filter(
+        weather_records: List[WeatherData] = db.query(WeatherData).filter(
             WeatherData.field_id == field_id
         ).order_by(WeatherData.timestamp.desc()).limit(limit).all()
 
         # Build lookup DataFrame
-        sensor_data = [
-            {
-                "timestamp": r.timestamp,
-                "soil_moisture": float(r.soil_moisture),
-                "temperature_soil": float(r.temperature_soil) if r.temperature_soil is not None else 22.0,
-                "battery_level": float(r.battery_level) if r.battery_level is not None else 95.0,
-                "cleaning_flag": r.cleaning_flag
-            }
-            for r in reversed(readings)
-        ]
+        sensor_data = []
+        for r in reversed(readings):
+            t_soil = getattr(r, "temperature_soil")
+            bat = getattr(r, "battery_level")
+            sensor_data.append({
+                "timestamp": getattr(r, "timestamp"),
+                "soil_moisture": float(getattr(r, "soil_moisture")),
+                "temperature_soil": float(t_soil) if t_soil is not None else 22.0,
+                "battery_level": float(bat) if bat is not None else 95.0,
+                "cleaning_flag": getattr(r, "cleaning_flag")
+            })
         df_sensor = pd.DataFrame(sensor_data)
 
         if not weather_records:
@@ -129,17 +131,17 @@ class DataCleaningPipeline:
             df_sensor["rain_probability"] = 10.0
             df_sensor["solar_radiation"] = 650.0
         else:
-            weather_data = [
-                {
-                    "timestamp": w.timestamp,
-                    "air_temperature": float(w.temperature),
-                    "humidity": float(w.humidity),
-                    "rainfall_1h": float(w.rainfall_1h),
-                    "rain_probability": float(w.rain_probability),
-                    "solar_radiation": float(w.solar_radiation) if w.solar_radiation is not None else 600.0,
-                }
-                for w in reversed(weather_records)
-            ]
+            weather_data = []
+            for w in reversed(weather_records):
+                sol = getattr(w, "solar_radiation")
+                weather_data.append({
+                    "timestamp": getattr(w, "timestamp"),
+                    "air_temperature": float(getattr(w, "temperature")),
+                    "humidity": float(getattr(w, "humidity")),
+                    "rainfall_1h": float(getattr(w, "rainfall_1h")),
+                    "rain_probability": float(getattr(w, "rain_probability")),
+                    "solar_radiation": float(sol) if sol is not None else 600.0,
+                })
             df_weather = pd.DataFrame(weather_data)
 
             # Merge on nearest timestamp within 1 hour
@@ -151,7 +153,7 @@ class DataCleaningPipeline:
                 df_weather.sort_values("timestamp"),
                 on="timestamp",
                 direction="nearest",
-                tolerance=pd.Timedelta("1h")
+                tolerance=timedelta(hours=1)
             )
             # Fill remaining with forward fill / backward fill
             df_sensor.ffill(inplace=True)
@@ -159,8 +161,8 @@ class DataCleaningPipeline:
 
         # 4. Attach Crop Context & ML Derived Target
         df_sensor["field_id"] = field_id
-        df_sensor["field_size_ha"] = float(field.size_hectares)
-        df_sensor["soil_type"] = str(field.soil_type)
+        df_sensor["field_size_ha"] = float(getattr(field, "size_hectares", 1.0))
+        df_sensor["soil_type"] = str(getattr(field, "soil_type", "Loam"))
         df_sensor["crop_type"] = crop_type
         df_sensor["growth_stage"] = growth_stage
         df_sensor["kc_factor"] = kc_factor

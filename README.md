@@ -70,6 +70,6 @@ docker-compose up --build
 - [x] **Simulated sensor data available** (Section 5)
 - [x] **Weather API integrated** (Section 7)
 - [x] **Farmer, field, crop, and sensor configuration implemented** (Section 8)
-- [ ] **Data validation and cleaning implemented** (Sections 9 & 10)
+- [x] **Data validation and cleaning implemented** (Sections 9 & 10)
 - [ ] **Historical sensor and weather data stored** (Section 12)
 - [ ] **Error handling implemented** (Section 11)
