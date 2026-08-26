@@ -6,7 +6,15 @@
     "editor.tabSize": 4,
     "editor.defaultFormatter": "ms-python.black-formatter"
   },
+  "python.defaultInterpreterPath": "C:\\Program Files\\Python314\\python.exe",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}",
+    "${workspaceFolder}/backend",
+    "C:\\Users\\ABIR CHATTERJEE\\AppData\\Roaming\\Python\\Python314\\site-packages",
+    "C:\\Program Files\\Python314\\Lib\\site-packages"
+  ],
   "python.analysis.typeCheckingMode": "basic",
+  "css.lint.unknownAtRules": "ignore",
   "files.exclude": {
     "**/.git": true,
     "**/.DS_Store": true,
