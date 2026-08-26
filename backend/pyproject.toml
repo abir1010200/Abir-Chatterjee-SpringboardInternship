@@ -36,3 +36,13 @@ dev = [
 asyncio_mode = "auto"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+
+[tool.pyright]
+include = ["."]
+extraPaths = [
+    "..",
+    ".",
+    "C:/Users/ABIR CHATTERJEE/AppData/Roaming/Python/Python314/site-packages",
+    "C:/Program Files/Python314/Lib/site-packages"
+]
+reportMissingImports = false

@@ -6,6 +6,7 @@ from backend.app.core.config import settings
 from backend.app.db.init_db import init_db, seed_db
 from backend.app.api.v1.api import api_router
 from backend.app.services.mqtt_subscriber import mqtt_service
+from backend.app.services.weather.scheduler import weather_scheduler
 
 # Configure structured logging
 logging.basicConfig(
@@ -21,9 +22,11 @@ async def lifespan(app: FastAPI):
     init_db()
     seed_db()
     mqtt_service.start()
+    weather_scheduler.start()
     yield
     # Shutdown:
-    logger.info("Shutting down services...")
+    logger.info("Shutting down background services...")
+    weather_scheduler.stop()
     mqtt_service.stop()
 
 app = FastAPI(
