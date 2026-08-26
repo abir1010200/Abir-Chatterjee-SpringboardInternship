@@ -1,25 +1,26 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Index, UniqueConstraint
-from sqlalchemy.orm import relationship
+from typing import Optional
+from sqlalchemy import String, Float, Boolean, DateTime, ForeignKey, Index, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.app.db.session import Base
 
 class SensorReading(Base):
     __tablename__ = "sensor_readings"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    sensor_id = Column(String(50), ForeignKey("sensors.id", ondelete="CASCADE"), nullable=False, index=True)
-    field_id = Column(Integer, ForeignKey("fields.id", ondelete="CASCADE"), nullable=False, index=True)
-    soil_moisture = Column(Float, nullable=False)  # % volumetric or relative (0 - 100%)
-    temperature_soil = Column(Float, nullable=True)  # °C
-    battery_level = Column(Float, nullable=True)  # %
-    timestamp = Column(DateTime(timezone=True), nullable=False, index=True)
-    is_valid = Column(Boolean, default=True, nullable=False)
-    cleaning_flag = Column(String(50), default="raw", nullable=False)  # raw, cleaned, interpolated, outlier_clipped
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True, autoincrement=True)
+    sensor_id: Mapped[str] = mapped_column(ForeignKey("sensors.id", ondelete="CASCADE"), nullable=False, index=True)
+    field_id: Mapped[int] = mapped_column(ForeignKey("fields.id", ondelete="CASCADE"), nullable=False, index=True)
+    soil_moisture: Mapped[float] = mapped_column(Float, nullable=False)
+    temperature_soil: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    battery_level: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    is_valid: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    cleaning_flag: Mapped[str] = mapped_column(String(50), default="raw", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships
-    sensor = relationship("Sensor", back_populates="readings")
-    field = relationship("Field", back_populates="sensor_readings")
+    sensor: Mapped["Sensor"] = relationship("Sensor", back_populates="readings")
+    field: Mapped["Field"] = relationship("Field", back_populates="sensor_readings")
 
     # Time-series Indexes & Idempotency Constraints
     __table_args__ = (

@@ -1,27 +1,28 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Index, Text
-from sqlalchemy.orm import relationship
+from typing import Optional
+from sqlalchemy import String, Float, DateTime, ForeignKey, Index, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.app.db.session import Base
 
 class WeatherData(Base):
     __tablename__ = "weather_data"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    field_id = Column(Integer, ForeignKey("fields.id", ondelete="CASCADE"), nullable=False, index=True)
-    temperature = Column(Float, nullable=False)  # °C
-    humidity = Column(Float, nullable=False)  # %
-    rainfall_1h = Column(Float, default=0.0, nullable=False)  # mm
-    rainfall_24h = Column(Float, default=0.0, nullable=False)  # mm
-    rain_probability = Column(Float, default=0.0, nullable=False)  # % (0 - 100)
-    wind_speed = Column(Float, nullable=True)  # m/s
-    solar_radiation = Column(Float, nullable=True)  # W/m² (or estimated direct/diffuse)
-    forecast_json = Column(Text, nullable=True)  # Serialized 5-day / 3-hr forecast
-    provider = Column(String(50), default="openweather", nullable=False)
-    timestamp = Column(DateTime(timezone=True), nullable=False, index=True)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True, autoincrement=True)
+    field_id: Mapped[int] = mapped_column(ForeignKey("fields.id", ondelete="CASCADE"), nullable=False, index=True)
+    temperature: Mapped[float] = mapped_column(Float, nullable=False)
+    humidity: Mapped[float] = mapped_column(Float, nullable=False)
+    rainfall_1h: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    rainfall_24h: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    rain_probability: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    wind_speed: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    solar_radiation: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    forecast_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    provider: Mapped[str] = mapped_column(String(50), default="openweather", nullable=False)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships
-    field = relationship("Field", back_populates="weather_data")
+    field: Mapped["Field"] = relationship("Field", back_populates="weather_data")
 
     # Time-series Index
     __table_args__ = (
