@@ -72,7 +72,42 @@ services:
     ports:
       - "3000:3000"
 
+  # MLflow Tracking Server & Model Registry
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    container_name: smart_irrigation_mlflow
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/mlruns
+    command: mlflow server --backend-store-uri sqlite:////mlruns/mlflow.db --default-artifact-root /mlruns --host 0.0.0.0 --port 5000
+
+  # AI-Powered Smart Irrigation ML Serving Engine
+  ml_service:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.ml
+    container_name: smart_irrigation_ml
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-smart_irrigation}
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - ML_SEED=${ML_SEED:-42}
+      - ML_SEQUENCE_LENGTH=${ML_SEQUENCE_LENGTH:-12}
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./ml:/app/ml
+      - ./backend:/app/backend
+
 volumes:
   postgres_data:
   mosquitto_data:
   mosquitto_log:
+  mlflow_data:

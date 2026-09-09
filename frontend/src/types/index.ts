@@ -107,3 +107,31 @@ export interface FieldRegistrationPayload {
     model_name?: string;
   };
 }
+
+export interface ScheduleResponse {
+  field_id?: number;
+  prediction_id?: number;
+  irrigation_required: boolean;
+  confidence_score: number;
+  predicted_volume_liters?: number;
+  recommended_volume_liters?: number;
+  recommended_duration_minutes: number;
+  recommended_start_time?: string;
+  priority?: string;
+  risk_level?: string;
+  reason?: string;
+  model_name?: string;
+  model_version?: string;
+  rain_postponed?: boolean;
+  rain_postponed_reason?: string;
+  moisture_deficit_percent?: number;
+  generated_at?: string;
+}
+
+export interface ModelInfoResponse {
+  active_model: string;
+  version: string;
+  metrics: Record<string, any>;
+  trained_at?: string;
+  artifact_path?: string;
+}

@@ -228,15 +228,25 @@ curl -X POST "http://localhost:8000/api/cleaning/field/1/run"
 curl -X GET "http://localhost:8000/api/cleaning/field/1/ml-dataset?limit=100"
 ```
 
+### 7. Run Real-Time AI Predictive Irrigation Recommendation (Milestone 2)
+```bash
+curl -X GET "http://localhost:8000/api/ml/recommendation/1"
+```
+
+### 8. Query Active ML Champion Model Metadata
+```bash
+curl -X GET "http://localhost:8000/api/ml/model/info"
+```
+
 ---
 
-## 📋 Milestone 1 Success Criteria Verification Checklist
+## 📋 Success Criteria Verification Checklist
 
 | Criterion | Description | Evidence / Artifact | Status |
 | :--- | :--- | :--- | :---: |
 | **Project environment configured** | Monorepo layout, Docker Compose, `.env.example`, VS Code settings | `docker-compose.yml`, `.vscode/settings.json` | ✅ |
 | **GitHub repository created** | Git repo with `main`, `dev`, `feature/*` branches and clean commit log | Git branch graph & commit history | ✅ |
-| **Database schema completed** | PostgreSQL / TimescaleDB schema, SQLAlchemy 2.0 models, time-series indexing | `backend/app/models/`, `backend/migrations/init.sql` | ✅ |
+| **Database schema completed** | PostgreSQL / TimescaleDB schema, SQLAlchemy 2.0 models, time-series indexing | `backend/app/models/`, `ml/db/models.py` | ✅ |
 | **Sensor data ingestion working** | REST `POST /readings` + Mosquitto MQTT subscriber with idempotency deduplication | `backend/app/api/v1/endpoints/sensors.py`, `mqtt_subscriber.py` | ✅ |
 | **Simulated sensor data available** | Physics-informed simulator with diurnal decay, infiltration spikes, and backfill CLI | `backend/scripts/simulate_sensors.py` | ✅ |
 | **Weather API integrated** | OpenWeather primary adapter, Tomorrow.io fallback, `APScheduler` poller | `backend/app/services/weather/`, `endpoints/weather.py` | ✅ |
@@ -244,3 +254,6 @@ curl -X GET "http://localhost:8000/api/cleaning/field/1/ml-dataset?limit=100"
 | **Data validation and cleaning** | Gap detection, Z-score outlier filtering, unit normalization, ML feature export | `backend/app/services/cleaning/`, `endpoints/cleaning.py` | ✅ |
 | **Historical sensor & weather data stored** | Time-series indexing `(field_id, timestamp)`, 30-day queries, `DATA_DICTIONARY.md` | `backend/app/models/`, `docs/DATA_DICTIONARY.md` | ✅ |
 | **Error handling implemented** | Sensor disconnection monitor (stale/offline), weather API fallback, structured JSON logger | `backend/app/services/sensor_monitor.py`, `core/logging_config.py` | ✅ |
+| **AI ML Predictive Engine** | Random Forest & PyTorch LSTM models, MLflow tracking, physics optimization scheduler | `ml/models/`, `ml/optimization/`, `ml/serving/` | ✅ |
+| **Integrated AI Dashboard** | Next.js 14 AI Recommendation card, rain postponed shield, ML performance specs | `frontend/src/components/`, `frontend/src/app/page.tsx` | ✅ |
+

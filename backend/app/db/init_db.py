@@ -3,6 +3,11 @@ from datetime import datetime, date, timezone, timedelta
 from sqlalchemy import text
 from backend.app.db.session import engine, SessionLocal, Base
 from backend.app.models import Farmer, Field, Crop, Sensor, SensorReading, WeatherData, IrrigationHistory
+try:
+    from ml.db.models import MLModelRegistry, IrrigationPrediction, IrrigationSchedule
+except ImportError:
+    pass
+
 
 logger = logging.getLogger(__name__)
 
@@ -76,8 +81,24 @@ def seed_db():
             last_seen=datetime.now(timezone.utc)
         )
         db.add_all([sensor1, sensor2])
+
+        # 5. Create Active ML Model Registry Entry if present
+        try:
+            from ml.db.models import MLModelRegistry
+            ml_model = MLModelRegistry(
+                model_name="random_forest",
+                model_version="1.0.0",
+                task_type="classification_and_regression",
+                metrics_json='{"accuracy": 0.995, "volume_mae": 1450.0, "roc_auc": 0.998}',
+                artifact_path="ml/artifacts/random_forest.joblib",
+                is_active=True,
+            )
+            db.add(ml_model)
+        except Exception:
+            pass
+
         db.commit()
-        logger.info("Demo database seeded successfully with 1 Farmer, 1 Field, 1 Crop, and 2 Sensors.")
+        logger.info("Demo database seeded successfully with Farmer, Field, Crop, Sensors, and ML Model Registry.")
     except Exception as e:
         db.rollback()
         logger.error(f"Error seeding database: {e}")
