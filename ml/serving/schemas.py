@@ -53,6 +53,11 @@ class ScheduleResponse(BaseModel):
     priority: str
     risk_level: str
     reason: str
+    farmer_summary: Optional[str] = None
+    action_badge: Optional[str] = None
+    water_saving_tip: Optional[str] = None
+    soil_health_status: Optional[str] = None
+    pump_duration_display: Optional[str] = None
     agronomic_context: Dict[str, Any]
     model_metadata: Dict[str, Any]
 

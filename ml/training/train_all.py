@@ -180,7 +180,7 @@ def run_training_pipeline() -> Dict[str, Any]:
 
     lstm_path = lstm_model.save(cfg.ARTIFACT_DIR)
     X_seq_test, y_seq_cls, y_seq_vol = lstm_model.create_sequences(test_df, is_training=False)
-    if len(X_seq_test) > 0:
+    if y_seq_cls is not None and len(X_seq_test) > 0:
         pred_cls_lstm, pred_vol_lstm, conf_lstm = lstm_model.predict(test_df)
         cm_lstm = evaluator.plot_confusion_matrix(y_seq_cls, pred_cls_lstm, lstm_model.name)
         roc_lstm = evaluator.plot_roc_curve(y_seq_cls, conf_lstm, lstm_model.name)

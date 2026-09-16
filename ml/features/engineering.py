@@ -88,7 +88,7 @@ def _soil_features(df: pd.DataFrame) -> pd.DataFrame:
     df["moisture_trend"] = df["soil_moisture"].rolling(6, min_periods=2).apply(
         lambda x: np.polyfit(range(len(x)), x, 1)[0] if len(x) > 1 else 0.0,
         raw=True
-    )
+    ).fillna(0.0)
     # Change rate (per hour)
     df["moisture_change_rate"] = df["soil_moisture"].diff(1).fillna(0.0)
 

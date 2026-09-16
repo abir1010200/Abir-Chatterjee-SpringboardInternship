@@ -7,7 +7,7 @@ import sys
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, cast
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends
@@ -138,12 +138,16 @@ def predict_schedule(request: IrrigationPredictRequest):
     return ScheduleResponse(**schedule_plan)
 
 
-@app.post("/recommendation/{field_id}", response_model=ScheduleResponse)
-def get_field_recommendation(field_id: int, db: Session = Depends(get_db)):
+@app.get("/predict/field/{field_id}", response_model=ScheduleResponse, tags=["Field Inference"])
+@app.post("/predict/field/{field_id}", response_model=ScheduleResponse, tags=["Field Inference"])
+def predict_for_field(field_id: int, db: Session = Depends(get_db)):
     """
-    Fetch latest real-time field telemetry and weather from DB, run ML inference,
-    generate schedule, and persist recommendation.
+    End-to-end endpoint: Fetches DB context for field_id, executes prediction,
+    runs optimal scheduler, and optionally persists the schedule.
     """
+    if not active_model:
+        raise HTTPException(status_code=503, detail="Model engine not initialized.")
+
     # 1. Fetch Field
     field = db.query(Field).filter(Field.id == field_id).first()
     if not field:
@@ -153,7 +157,7 @@ def get_field_recommendation(field_id: int, db: Session = Depends(get_db)):
     crop = db.query(Crop).filter(Crop.field_id == field_id, Crop.is_active == True).first()
     crop_type = crop.crop_type if crop else "Tomato"
     growth_stage = crop.growth_stage if crop else "Vegetative"
-    kc_factor = float(crop.kc_factor) if crop else 1.0
+    kc_factor = float(cast(Any, crop.kc_factor)) if crop else 1.0
 
     # 3. Fetch Latest Sensor Reading
     reading = (
@@ -162,7 +166,7 @@ def get_field_recommendation(field_id: int, db: Session = Depends(get_db)):
         .order_by(SensorReading.timestamp.desc())
         .first()
     )
-    soil_moisture = float(reading.soil_moisture) if reading else 26.0
+    soil_moisture = float(cast(Any, reading.soil_moisture)) if reading else 26.0
 
     # 4. Fetch Latest Weather Data
     weather = (
@@ -171,11 +175,11 @@ def get_field_recommendation(field_id: int, db: Session = Depends(get_db)):
         .order_by(WeatherData.timestamp.desc())
         .first()
     )
-    temp = float(weather.temperature) if weather else 27.5
-    humidity = float(weather.humidity) if weather else 55.0
-    rain_prob = float(weather.rain_probability) if weather else 12.0
-    rainfall_1h = float(weather.rainfall_1h) if weather else 0.0
-    solar_rad = float(weather.solar_radiation) if weather else 650.0
+    temp = float(cast(Any, weather.temperature)) if weather else 27.5
+    humidity = float(cast(Any, weather.humidity)) if weather else 55.0
+    rain_prob = float(cast(Any, weather.rain_probability)) if weather else 12.0
+    rainfall_1h = float(cast(Any, weather.rainfall_1h)) if weather else 0.0
+    solar_rad = float(cast(Any, weather.solar_radiation)) if weather and weather.solar_radiation is not None else 650.0
 
     feat_dict = {
         "field_id": field_id,
@@ -190,7 +194,7 @@ def get_field_recommendation(field_id: int, db: Session = Depends(get_db)):
         "crop_type": crop_type,
         "growth_stage": growth_stage,
         "kc_factor": kc_factor,
-        "size_hectares": float(field.size_hectares),
+        "size_hectares": float(cast(Any, field.size_hectares)),
         "hour_of_day": datetime.now(timezone.utc).hour,
     }
 

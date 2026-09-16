@@ -58,11 +58,11 @@ class ServedModelWrapper:
             if hasattr(self.model, "predict_row"):
                 row = pd.Series(feat_dict)
                 req, vol, conf, rec_hour = self.model.predict_row(row)
-                return bool(req), float(vol), float(conf), int(rec_hour)
+                return bool(req), float(vol), float(conf), rec_hour
             else:
                 baseline = BaselineIrrigationModel()
                 req, vol, conf, rec_hour = baseline.predict_row(pd.Series(feat_dict))
-                return bool(req), float(vol), float(conf), int(rec_hour)
+                return bool(req), float(vol), float(conf), rec_hour
 
         # Tabular model pipeline
         df_input = pd.DataFrame([feat_dict])
@@ -95,7 +95,7 @@ class ServedModelWrapper:
             logger.warning(f"Inference error in {self.model_name}: {e}. Falling back to baseline.")
             baseline = BaselineIrrigationModel()
             req, vol, conf, rec_hour = baseline.predict_row(pd.Series(feat_dict))
-            return bool(req), float(vol), float(conf), int(rec_hour)
+            return bool(req), float(vol), float(conf), rec_hour
 
 
 def load_active_model() -> ServedModelWrapper:
@@ -154,9 +154,9 @@ def load_active_model() -> ServedModelWrapper:
     try:
         db = SessionLocal()
         record = db.query(MLModelRegistry).filter(MLModelRegistry.is_active == True).order_by(MLModelRegistry.id.desc()).first()
-        if record and record.artifact_path and Path(record.artifact_path).exists():
-            art_p = Path(record.artifact_path)
-            model_name = record.model_name
+        if record and record.artifact_path and Path(str(record.artifact_path)).exists():
+            art_p = Path(str(record.artifact_path))
+            model_name = str(record.model_name)
             if model_name == "random_forest":
                 loaded = RandomForestIrrigationModel.load(art_p)
             elif model_name == "gradient_boosting":
@@ -166,15 +166,15 @@ def load_active_model() -> ServedModelWrapper:
             else:
                 loaded = BaselineIrrigationModel()
 
-            metrics = json.loads(record.metrics_json) if record.metrics_json else {}
+            metrics = json.loads(str(record.metrics_json)) if record.metrics_json else {}
             db.close()
             return ServedModelWrapper(
                 model_name=model_name,
-                version=record.model_version,
+                version=str(record.model_version),
                 model_instance=loaded,
                 preprocessor=preprocessor,
                 metrics=metrics,
-                artifact_path=record.artifact_path,
+                artifact_path=str(record.artifact_path) if record.artifact_path else None,
                 trained_at=str(record.trained_at),
             )
         db.close()

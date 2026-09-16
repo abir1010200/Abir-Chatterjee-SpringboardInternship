@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Field, SensorReading, WeatherData, ScheduleResponse, ModelInfoResponse } from '@/types';
 import AIRecommendationCard from '@/components/AIRecommendationCard';
 import MLModelPerformanceCard from '@/components/MLModelPerformanceCard';
+import FarmerWhatIfSimulator from '@/components/FarmerWhatIfSimulator';
 
 export default function DashboardPage() {
   const [fields, setFields] = useState<Field[]>([]);
@@ -88,19 +89,61 @@ export default function DashboardPage() {
         setSchedule({
           field_id: fieldId,
           irrigation_required: true,
-          recommended_volume_liters: 14500,
-          recommended_start_time: new Date(Date.now() + 3600 * 1000 * 2).toISOString(),
+          predicted_volume_liters: 1250,
           recommended_duration_minutes: 45,
-          confidence_score: 0.942,
+          recommended_start_time: new Date(Date.now() + 3600 * 1000 * 2).toISOString(),
+          confidence_score: 0.985,
           model_name: 'random_forest',
           model_version: '1.0.0',
           rain_postponed: false,
-          moisture_deficit_percent: 24.8,
+          moisture_deficit_percent: 22.5,
+          farmer_summary: 'Water your Wheat (Vegetative) field tomorrow morning at 6:00 AM with 1,250 Liters (~45 mins pump) to maintain optimal soil moisture.',
+          action_badge: '💧 WATER TODAY (06:00 AM)',
+          water_saving_tip: '💡 Morning watering (6 AM - 8 AM) reduces evaporation loss by up to 25% compared to afternoon heat.',
+          soil_health_status: 'Needs Irrigation (Dry)',
+          pump_duration_display: '45 minutes',
           generated_at: new Date().toISOString(),
         });
       }
     } catch (err) {
       console.warn('Unable to fetch ML recommendation from server, using active state fallback:', err);
+    } finally {
+      setMlLoading(false);
+    }
+  };
+
+  const handleSimulate = async (customParams: {
+    soil_moisture: number;
+    temperature: number;
+    humidity: number;
+    rain_probability: number;
+  }) => {
+    setMlLoading(true);
+    try {
+      const payload = {
+        field_id: selectedFieldId || 1,
+        soil_moisture: customParams.soil_moisture,
+        temperature: customParams.temperature,
+        humidity: customParams.humidity,
+        rainfall_1h: 0.0,
+        rain_probability: customParams.rain_probability,
+        soil_type: currentField?.soil_type || 'Clay Loam',
+        crop_type: 'Wheat',
+        growth_stage: 'Vegetative',
+        kc_factor: 1.15,
+        size_hectares: currentField?.size_hectares || 2.5,
+      };
+      const res = await fetch('/api/ml/predict/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const schedData = await res.json();
+        setSchedule(schedData);
+      }
+    } catch (e) {
+      console.error('Error running custom ML simulation:', e);
     } finally {
       setMlLoading(false);
     }
@@ -132,11 +175,11 @@ export default function DashboardPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-lg mb-2">
-            <span>🌾</span> Predictive Irrigation Intelligence (Milestone 2 AI)
+            <span>🌾</span> AI-Powered Farmer Irrigation Assistant
           </div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">AI Smart Irrigation Command Hub</h2>
+          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Smart Farmer Irrigation Command Hub</h2>
           <p className="text-sm text-slate-500 mt-1">
-            Real-time IoT soil telemetry, ML Random Forest & LSTM decision engine, and automated rain delay shields.
+            Real-time IoT soil moisture monitoring, AI watering predictions, and automated rain saving shields.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -174,6 +217,12 @@ export default function DashboardPage() {
         schedule={schedule}
         loading={mlLoading}
         onRefresh={() => selectedFieldId && fetchMLRecommendation(selectedFieldId)}
+      />
+
+      {/* Interactive Farmer What-If Tool */}
+      <FarmerWhatIfSimulator
+        onSimulate={handleSimulate}
+        loading={mlLoading}
       />
 
       {/* Main Real-Time Telemetry Metrics Grid */}

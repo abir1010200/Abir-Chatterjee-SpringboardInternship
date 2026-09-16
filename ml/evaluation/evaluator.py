@@ -14,7 +14,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")  # Non-interactive backend
 import matplotlib.pyplot as plt
-import seaborn as sns
+import seaborn as sns  # type: ignore
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score,
     f1_score, roc_auc_score, confusion_matrix, roc_curve,
@@ -95,8 +95,8 @@ class ModelEvaluator:
             plt.figure(figsize=(6, 5))
             plt.plot(fpr, tpr, color="darkorange", lw=2, label=f"ROC (AUC = {auc_score:.3f})")
             plt.plot([0, 1], [0, 1], color="navy", lw=2, linestyle="--")
-            plt.xlim([0.0, 1.0])
-            plt.ylim([0.0, 1.05])
+            plt.xlim((0.0, 1.0))
+            plt.ylim((0.0, 1.05))
             plt.xlabel("False Positive Rate")
             plt.ylabel("True Positive Rate")
             plt.title(f"ROC Curve — {model_name.replace('_', ' ').title()}")

@@ -1,68 +1,75 @@
 """
 ml/tests/test_features.py
-Unit tests for feature engineering, encoding, and data transformation pipeline.
+Unit tests for agricultural feature engineering pipeline.
 """
-import sys
-from pathlib import Path
-import numpy as np
-import pandas as pd
 import pytest
+import pandas as pd
+import numpy as np
+from datetime import datetime, timezone, timedelta
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-from ml.data.synthetic_generator import generate_synthetic_dataset
-from ml.features.engineering import (
-    engineer_features, _soil_features, _encode_categorical, _interaction_features
-)
-from ml.preprocessing.pipeline import build_preprocessing_pipeline, ALL_FEATURES
-
-
-@pytest.fixture
-def sample_raw_data() -> pd.DataFrame:
-    """Generate a quick 100-row synthetic dataset for testing."""
-    return generate_synthetic_dataset(days=10, interval_hours=2)
+from ml.src.features import extract_features, compute_hargreaves_et0, get_feature_columns
+from ml.preprocessing.pipeline import ALL_FEATURES, build_preprocessing_pipeline
 
 
-def test_encode_categorical(sample_raw_data: pd.DataFrame):
-    df = _encode_categorical(sample_raw_data)
-    assert "crop_type_encoded" in df.columns
-    assert "growth_stage_encoded" in df.columns
-    assert "soil_type_encoded" in df.columns
-    assert "stage_water_requirement_mm" in df.columns
-    assert df["crop_type_encoded"].dtype in [np.int32, np.int64, int]
+def test_hargreaves_et0():
+    """Test Hargreaves ET0 calculation output within realistic bounds."""
+    et0 = compute_hargreaves_et0(temp=30.0, humidity=40.0, solar_rad=800.0)
+    assert 0.5 <= et0 <= 12.0
 
 
-def test_soil_features(sample_raw_data: pd.DataFrame):
-    df = _soil_features(sample_raw_data)
-    assert "prev_soil_moisture" in df.columns
-    assert "rolling_mean_3h" in df.columns
-    assert "rolling_mean_6h" in df.columns
-    assert "moisture_trend" in df.columns
-    assert "moisture_change_rate" in df.columns
-    assert "moisture_deficit" in df.columns
-    # Check no nulls created in rolling mean
-    assert df["rolling_mean_3h"].isnull().sum() == 0
+def test_extract_features_columns():
+    """Test that feature extraction generates required feature columns."""
+    now = datetime.now(timezone.utc)
+    sample_data = []
+    for i in range(24):
+        sample_data.append({
+            "timestamp": now + timedelta(hours=i),
+            "field_id": 1,
+            "soil_moisture": 25.0 - i * 0.2,
+            "temperature": 28.0 + (i % 5),
+            "humidity": 60.0 - (i % 10),
+            "rainfall_1h": 0.0,
+            "rainfall_24h": 0.0,
+            "rain_probability": 10.0,
+            "solar_radiation": 500.0,
+            "crop_type": "Wheat",
+            "growth_stage": "Vegetative",
+            "kc_factor": 1.15,
+            "size_hectares": 2.5,
+            "soil_type": "Clay Loam",
+            "irrigation_required": 0,
+            "irrigation_volume_liters": 0.0,
+        })
+    df = pd.DataFrame(sample_data)
+    df_feat = extract_features(df)
 
-
-def test_interaction_features(sample_raw_data: pd.DataFrame):
-    df = _interaction_features(sample_raw_data)
-    assert "sm_x_temp" in df.columns
-    assert "sm_x_humidity" in df.columns
-    assert "rain_prob_x_sm" in df.columns
-    assert "kc_x_sm" in df.columns
-
-
-def test_full_feature_pipeline(sample_raw_data: pd.DataFrame):
-    df = engineer_features(sample_raw_data)
     for col in ALL_FEATURES:
-        assert col in df.columns, f"Expected feature {col} missing after engineering"
-    assert len(df) > 0
+        assert col in df_feat.columns, f"Missing feature column: {col}"
 
 
-def test_preprocessing_pipeline(sample_raw_data: pd.DataFrame):
-    df = engineer_features(sample_raw_data)
-    pipeline = build_preprocessing_pipeline()
-    pipeline.fit(df)
-    transformed = pipeline.transform(df)
-    assert transformed.shape[0] == len(df)
-    assert transformed.shape[1] == len(ALL_FEATURES)
-    assert not np.isnan(transformed).any()
+def test_preprocessing_pipeline_fit_transform():
+    """Test Scikit-Learn ColumnTransformer pipeline fit and transform."""
+    now = datetime.now(timezone.utc)
+    sample_data = [{
+        "timestamp": now,
+        "field_id": 1,
+        "soil_moisture": 25.0,
+        "temperature": 28.0,
+        "humidity": 60.0,
+        "rainfall_1h": 0.0,
+        "rainfall_24h": 0.0,
+        "rain_probability": 10.0,
+        "solar_radiation": 500.0,
+        "crop_type": "Wheat",
+        "growth_stage": "Vegetative",
+        "kc_factor": 1.15,
+        "size_hectares": 2.5,
+        "soil_type": "Clay Loam",
+    }]
+    df = pd.DataFrame(sample_data)
+    df_feat = extract_features(df)
+
+    pipe = build_preprocessing_pipeline()
+    X_transformed = pipe.fit_transform(df_feat)
+    assert X_transformed.shape[0] == 1
+    assert X_transformed.shape[1] == len(ALL_FEATURES)

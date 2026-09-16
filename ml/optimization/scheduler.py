@@ -145,6 +145,45 @@ class IrrigationScheduler:
         start_time = self.determine_optimal_slot(rec_hour, temperature) if required else None
         scheduled_date = (start_time.date() if start_time else datetime.now(timezone.utc).date())
 
+        # Soil health status text
+        if soil_moisture >= 85.0:
+            soil_status = "Saturated (Over-Wet)"
+        elif soil_moisture >= trigger_threshold:
+            soil_status = "Optimal Moisture"
+        elif soil_moisture >= trigger_threshold - 8.0:
+            soil_status = "Slightly Dry (Monitor)"
+        else:
+            soil_status = "Needs Irrigation (Dry)"
+
+        # Pump runtime formatting
+        if duration_mins >= 60:
+            hrs = duration_mins // 60
+            mins = duration_mins % 60
+            pump_duration = f"{hrs} hr {mins} mins" if mins > 0 else f"{hrs} hours"
+        else:
+            pump_duration = f"{duration_mins} minutes"
+
+        # Action badge & farmer advice strings
+        if rain_prob >= cfg.RAIN_POSTPONE_THRESHOLD:
+            action_badge = "🌧️ RAIN EXPECTED — HOLD WATERING"
+            farmer_summary = (
+                f"Rain forecast is {rain_prob:.0f}%. Holding irrigation to save electricity and prevent root waterlogging for your {crop_type} ({growth_stage})."
+            )
+            saving_tip = "💡 Holding watering during rain saves ~₹150-₹300 in electricity and prevents nutrient leaching."
+        elif required:
+            time_str = start_time.strftime("%I:%M %p") if start_time else "Early Morning"
+            action_badge = f"💧 WATER TODAY ({time_str})"
+            farmer_summary = (
+                f"Water your {crop_type} ({growth_stage}) field at {time_str} with {round(volume):,} Liters of water ({pump_duration} pump time)."
+            )
+            saving_tip = "💡 Watering in cool morning hours (6 AM - 8 AM) reduces evaporation loss by up to 25%."
+        else:
+            action_badge = "🌱 OPTIMAL SOIL — NO WATER NEEDED"
+            farmer_summary = (
+                f"Your {crop_type} field has healthy soil moisture ({soil_moisture:.1f}%). No irrigation is required today."
+            )
+            saving_tip = "💡 Optimal moisture level maintains healthy root aeration and saves energy."
+
         schedule_plan = {
             "field_id": field_id,
             "irrigation_required": required,
@@ -155,6 +194,11 @@ class IrrigationScheduler:
             "priority": priority,
             "risk_level": risk_level,
             "reason": reason,
+            "farmer_summary": farmer_summary,
+            "action_badge": action_badge,
+            "water_saving_tip": saving_tip,
+            "soil_health_status": soil_status,
+            "pump_duration_display": pump_duration,
             "agronomic_context": {
                 "soil_moisture": soil_moisture,
                 "field_capacity_trigger": round(trigger_threshold, 1),
@@ -209,7 +253,7 @@ class IrrigationScheduler:
                     db.add(db_schedule)
 
                 db.commit()
-                schedule_plan["prediction_id"] = db_prediction.id
+                schedule_plan["prediction_id"] = int(getattr(db_prediction, "id"))
                 logger.info(f"Persisted prediction #{db_prediction.id} for field #{field_id}")
             except Exception as e:
                 logger.error(f"Error persisting irrigation schedule to database: {e}")

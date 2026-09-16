@@ -120,6 +120,11 @@ export interface ScheduleResponse {
   priority?: string;
   risk_level?: string;
   reason?: string;
+  farmer_summary?: string;
+  action_badge?: string;
+  water_saving_tip?: string;
+  soil_health_status?: string;
+  pump_duration_display?: string;
   model_name?: string;
   model_version?: string;
   rain_postponed?: boolean;

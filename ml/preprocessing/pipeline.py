@@ -52,12 +52,12 @@ TARGET_REGRESSION_HOUR = "recommended_hour"
 def build_preprocessing_pipeline() -> ColumnTransformer:
     """Build sklearn ColumnTransformer for numeric + categorical features."""
     numeric_pipe = Pipeline([
-        ("imputer", SimpleImputer(strategy="median")),
+        ("imputer", SimpleImputer(strategy="median", keep_empty_features=True)),
         ("scaler", StandardScaler()),
     ])
     # Categorical features are already label-encoded integers; just impute
     cat_pipe = Pipeline([
-        ("imputer", SimpleImputer(strategy="most_frequent")),
+        ("imputer", SimpleImputer(strategy="most_frequent", keep_empty_features=True)),
     ])
     return ColumnTransformer(
         transformers=[

@@ -6,6 +6,7 @@ from backend.app.core.config import settings
 
 router = APIRouter()
 
+@router.get("")
 @router.get("/")
 def health_check(db: Session = Depends(get_db)):
     """Health check verifying API status and DB connectivity."""

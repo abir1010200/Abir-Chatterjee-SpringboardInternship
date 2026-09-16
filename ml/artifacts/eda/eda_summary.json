@@ -1,0 +1,109 @@
+{
+  "initial_rows": 38880,
+  "initial_columns": [
+    "timestamp",
+    "field_id",
+    "soil_moisture",
+    "temperature_soil",
+    "temperature",
+    "humidity",
+    "rainfall_1h",
+    "rainfall_24h",
+    "rain_probability",
+    "solar_radiation",
+    "crop_type",
+    "growth_stage",
+    "kc_factor",
+    "size_hectares",
+    "soil_type",
+    "prev_irrigation_volume",
+    "hours_since_last_irrigation",
+    "rolling_7d_irrigation_liters",
+    "hour_of_day",
+    "day_of_week",
+    "day_of_year",
+    "days_since_planted",
+    "irrigation_required",
+    "irrigation_volume_liters",
+    "recommended_hour",
+    "data_source"
+  ],
+  "missing_values_before": {
+    "timestamp": 0,
+    "field_id": 0,
+    "soil_moisture": 0,
+    "temperature_soil": 0,
+    "temperature": 0,
+    "humidity": 0,
+    "rainfall_1h": 0,
+    "rainfall_24h": 0,
+    "rain_probability": 0,
+    "solar_radiation": 0,
+    "crop_type": 0,
+    "growth_stage": 0,
+    "kc_factor": 0,
+    "size_hectares": 0,
+    "soil_type": 0,
+    "prev_irrigation_volume": 0,
+    "hours_since_last_irrigation": 0,
+    "rolling_7d_irrigation_liters": 0,
+    "hour_of_day": 0,
+    "day_of_week": 0,
+    "day_of_year": 0,
+    "days_since_planted": 0,
+    "irrigation_required": 0,
+    "irrigation_volume_liters": 0,
+    "recommended_hour": 0,
+    "data_source": 0
+  },
+  "duplicates_removed": 0,
+  "outliers_detected": {
+    "soil_moisture": {
+      "q1": 26.06,
+      "q3": 32.94,
+      "iqr": 6.879999999999999,
+      "lower_bound": 15.74,
+      "upper_bound": 43.26,
+      "n_outliers": 16
+    },
+    "temperature": {
+      "q1": 22.64,
+      "q3": 31.86,
+      "iqr": 9.219999999999999,
+      "lower_bound": 8.810000000000002,
+      "upper_bound": 45.69,
+      "n_outliers": 0
+    },
+    "humidity": {
+      "q1": 56.3,
+      "q3": 74.7,
+      "iqr": 18.400000000000006,
+      "lower_bound": 28.69999999999999,
+      "upper_bound": 102.30000000000001,
+      "n_outliers": 0
+    },
+    "rainfall_1h": {
+      "q1": 0.0,
+      "q3": 0.0,
+      "iqr": 0.0,
+      "lower_bound": 0.0,
+      "upper_bound": 0.0,
+      "n_outliers": 297
+    },
+    "solar_radiation": {
+      "q1": 0.0,
+      "q3": 600.7,
+      "iqr": 600.7,
+      "lower_bound": -901.0500000000001,
+      "upper_bound": 1501.75,
+      "n_outliers": 0
+    }
+  },
+  "sensor_corrections": {
+    "soil_moisture_clamped": 0,
+    "negative_rain_fixed": 0,
+    "humidity_clamped": 0,
+    "temperature_clamped": 0
+  },
+  "final_rows": 38880
+}

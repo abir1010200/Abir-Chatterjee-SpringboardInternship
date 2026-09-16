@@ -6,7 +6,7 @@ const nextConfig = {
     return [
       {
         source: '/api/ml/:path*',
-        destination: `${process.env.NEXT_PUBLIC_ML_API_URL || 'http://localhost:8001'}/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_ML_API_URL || 'http://localhost:8000'}/api/ml/:path*`,
       },
       {
         source: '/api/:path*',
