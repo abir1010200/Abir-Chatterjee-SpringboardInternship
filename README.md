@@ -5,7 +5,7 @@
 
 ---
 
-## 🌟 Executive Pitch Summary (For Hackathon Judges)
+## 🌟 Executive Pitch Summary 
 
 ### 1. The Critical Problem
 Agriculture accounts for **70% of global freshwater withdrawals**, yet **over 40% of irrigation water is wasted** due to antiquated fixed timer schedules or reactive manual guessing. Over-watering causes root rot, nutrient leaching, and energy waste; under-watering stunts crop yields and induces drought stress.
