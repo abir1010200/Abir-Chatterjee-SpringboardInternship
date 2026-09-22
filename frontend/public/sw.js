@@ -1,9 +1,15 @@
 // SmartIrrigate AI - Progressive Web App Service Worker
-const CACHE_NAME = 'smartirrigate-v1';
+const CACHE_NAME = 'smartirrigate-v2';
 
-// Essential static assets to cache for offline fallback
+// Essential static assets & routes to cache for offline fallback
 const STATIC_ASSETS = [
   '/',
+  '/fields',
+  '/schedule',
+  '/history',
+  '/analytics',
+  '/profile',
+  '/register',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
@@ -32,22 +38,29 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event: Network-first with cache fallback strategy for dynamic content, cache-first for static
+// Fetch event: Network-first with cache fallback strategy for API, Stale-While-Revalidate for pages
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests and browser extensions
   if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) return;
 
-  // Handle API calls: Network only or Network first
   if (event.request.url.includes('/api/')) {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match(event.request);
-      })
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request);
+        })
     );
     return;
   }
 
-  // Default Stale-While-Revalidate for pages & static assets
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request)
@@ -66,3 +79,28 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// Push notification listener for irrigation alerts
+self.addEventListener('push', (event) => {
+  const data = event.data ? event.data.json() : {};
+  const title = data.title || '💧 SmartIrrigate Action Alert';
+  const options = {
+    body: data.body || 'Irrigation schedule ready for your field.',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    vibrate: [100, 50, 100],
+    data: {
+      url: data.url || '/'
+    }
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Notification click listener
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow(event.notification.data.url || '/')
+  );
+});
+

@@ -12,10 +12,36 @@ class FarmerBase(BaseModel):
 class FarmerCreate(FarmerBase):
     pass
 
+class FarmerUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+
 class FarmerResponse(FarmerBase):
     id: int
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+# --- Irrigation History Schemas ---
+class IrrigationHistoryBase(BaseModel):
+    field_id: int
+    volume_liters: float = Field(..., gt=0.0)
+    start_time: datetime = Field(default_factory=lambda: datetime.now())
+    end_time: Optional[datetime] = None
+    duration_minutes: Optional[int] = Field(None, ge=1)
+    trigger_source: str = Field("manual", description="manual, automated_ml, rule_based")
+    status: str = Field("completed", description="scheduled, in_progress, completed, aborted")
+    notes: Optional[str] = None
+
+class IrrigationHistoryCreate(IrrigationHistoryBase):
+    pass
+
+class IrrigationHistoryResponse(IrrigationHistoryBase):
+    id: int
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
 
 # --- Crop Schemas ---
 class CropBase(BaseModel):

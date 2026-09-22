@@ -12,7 +12,7 @@
     "volume_rmse": 6651.07,
     "volume_r2": -1.6188
   },
-  "artifact_path": "D:\\AbirchatterjeeprojectAI\\ml\\artifacts\\random_forest_v1.0.0.joblib",
-  "preprocessor_path": "D:\\AbirchatterjeeprojectAI\\ml\\artifacts\\preprocessor.joblib",
+  "artifact_path": "/app/ml/artifacts/random_forest_v1.0.0.joblib",
+  "preprocessor_path": "/app/ml/artifacts/preprocessor.joblib",
   "trained_at": "2026-09-12T09:41:45.481733+00:00"
 }

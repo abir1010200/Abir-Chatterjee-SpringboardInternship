@@ -47,7 +47,7 @@ export default function MLModelPerformanceCard({ modelInfo, loading }: MLModelPe
         </div>
         <div className="text-right">
           <div className="text-xs font-bold text-slate-700">Version {modelInfo?.version || '1.0.0'}</div>
-          <div className="text-[11px] text-slate-400">
+          <div className="text-[11px] text-slate-400" suppressHydrationWarning>
             {modelInfo?.trained_at
               ? `Trained ${new Date(modelInfo.trained_at).toLocaleDateString()}`
               : 'Production Ready'}

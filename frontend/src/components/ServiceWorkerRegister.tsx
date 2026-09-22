@@ -1,15 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Download, CheckCircle2, WifiOff } from 'lucide-react';
+import { Download, WifiOff } from 'lucide-react';
 
 export default function ServiceWorkerRegister() {
+  const [mounted, setMounted] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+
     // 1. Service Worker registration
     if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
       navigator.serviceWorker
@@ -69,6 +72,8 @@ export default function ServiceWorkerRegister() {
     setDeferredPrompt(null);
   };
 
+  if (!mounted) return null;
+
   return (
     <>
       {/* Offline Alert Banner */}
@@ -79,7 +84,7 @@ export default function ServiceWorkerRegister() {
         </div>
       )}
 
-      {/* PWA Install Banner (Large Tappable Button for Farmers) */}
+      {/* PWA Install Banner */}
       {isInstallable && !isInstalled && (
         <div className="bg-emerald-800 text-white p-4 sticky top-0 z-50 shadow-lg border-b-2 border-emerald-600 flex items-center justify-between">
           <div className="flex items-center gap-3">

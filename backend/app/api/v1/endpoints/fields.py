@@ -7,8 +7,10 @@ from backend.app.models.farmer import Farmer
 from backend.app.models.field import Field
 from backend.app.models.crop import Crop
 from backend.app.models.sensor import Sensor
+from backend.app.models.irrigation_history import IrrigationHistory
 from backend.app.schemas.field_config import (
     FarmerCreate,
+    FarmerUpdate,
     FarmerResponse,
     FieldCreate,
     FieldResponse,
@@ -16,6 +18,8 @@ from backend.app.schemas.field_config import (
     CropUpdate,
     CropResponse,
     CompositeFieldRegistration,
+    IrrigationHistoryCreate,
+    IrrigationHistoryResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -215,3 +219,63 @@ def update_crop_stage(crop_id: int, payload: CropUpdate, db: Session = Depends(g
     db.commit()
     db.refresh(crop)
     return crop
+
+@router.put("/farmers/{farmer_id}", response_model=FarmerResponse)
+def update_farmer(farmer_id: int, payload: FarmerUpdate, db: Session = Depends(get_db)):
+    """Update farmer profile parameters (Name, Phone, Email, Address)."""
+    farmer = db.query(Farmer).filter(Farmer.id == farmer_id).first()
+    if not farmer:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Farmer profile not found")
+
+    if payload.name is not None:
+        setattr(farmer, "name", payload.name)
+    if payload.email is not None:
+        setattr(farmer, "email", payload.email)
+    if payload.phone is not None:
+        setattr(farmer, "phone", payload.phone)
+    if payload.address is not None:
+        setattr(farmer, "address", payload.address)
+
+    db.commit()
+    db.refresh(farmer)
+    return farmer
+
+# --- Irrigation History Endpoints ---
+@router.post("/irrigation/history", response_model=IrrigationHistoryResponse, status_code=status.HTTP_201_CREATED)
+def record_irrigation_event(payload: IrrigationHistoryCreate, db: Session = Depends(get_db)):
+    """Record an irrigation event (manual log or automated dispatch)."""
+    field = db.query(Field).filter(Field.id == payload.field_id).first()
+    if not field:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Field not found")
+
+    history = IrrigationHistory(
+        field_id=payload.field_id,
+        volume_liters=payload.volume_liters,
+        start_time=payload.start_time,
+        end_time=payload.end_time,
+        duration_minutes=payload.duration_minutes,
+        trigger_source=payload.trigger_source,
+        status=payload.status,
+        notes=payload.notes,
+    )
+    db.add(history)
+    db.commit()
+    db.refresh(history)
+    return history
+
+@router.get("/irrigation/history/field/{field_id}", response_model=List[IrrigationHistoryResponse])
+def get_field_irrigation_history(field_id: int, db: Session = Depends(get_db)):
+    """Retrieve historical irrigation records for a specific field."""
+    records = (
+        db.query(IrrigationHistory)
+        .filter(IrrigationHistory.field_id == field_id)
+        .order_by(IrrigationHistory.start_time.desc())
+        .all()
+    )
+    return records
+
+@router.get("/irrigation/history/all", response_model=List[IrrigationHistoryResponse])
+def get_all_irrigation_history(db: Session = Depends(get_db)):
+    """Retrieve all historical irrigation logs across fields."""
+    return db.query(IrrigationHistory).order_by(IrrigationHistory.start_time.desc()).all()
+

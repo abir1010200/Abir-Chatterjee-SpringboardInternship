@@ -140,3 +140,16 @@ export interface ModelInfoResponse {
   trained_at?: string;
   artifact_path?: string;
 }
+
+export interface AuthResponse {
+  success: boolean;
+  message: string;
+  access_token?: string;
+  token_type?: string;
+  farmer?: Farmer;
+}
+
+export interface LoginCredentials {
+  username_or_email: string;
+  password: string;
+}

@@ -1,12 +1,12 @@
 {
-  "name": "SmartIrrigate AI — Farmer Irrigation Assistant",
-  "short_name": "SmartIrrigate",
+  "name": "KrishiPals AI — Precision Irrigation Companion",
+  "short_name": "KrishiPals",
   "description": "AI-Powered Smart Irrigation & Water Management for Farmers",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f8fafc",
-  "theme_color": "#15803d",
+  "background_color": "#064e3b",
+  "theme_color": "#064e3b",
   "icons": [
     {
       "src": "/icon-192.png",

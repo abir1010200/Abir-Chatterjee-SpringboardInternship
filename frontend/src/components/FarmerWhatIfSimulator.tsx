@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useKrishiPals } from '@/context/KrishiPalsContext';
+import { Sliders, RefreshCw, Play, Volume2, Sparkles } from 'lucide-react';
 
 interface FarmerWhatIfSimulatorProps {
-  onSimulate: (customParams: {
+  onSimulate: (params: {
     soil_moisture: number;
     temperature: number;
     humidity: number;
@@ -13,34 +15,11 @@ interface FarmerWhatIfSimulatorProps {
 }
 
 export default function FarmerWhatIfSimulator({ onSimulate, loading }: FarmerWhatIfSimulatorProps) {
-  const [moisture, setMoisture] = useState<number>(20.0);
-  const [temp, setTemp] = useState<number>(32.0);
-  const [humidity, setHumidity] = useState<number>(45.0);
-  const [rainProb, setRainProb] = useState<number>(10.0);
-
-  const handleApplyPreset = (preset: 'hot' | 'dry' | 'rain' | 'optimal') => {
-    if (preset === 'hot') {
-      setMoisture(18.0);
-      setTemp(40.0);
-      setHumidity(30.0);
-      setRainProb(5.0);
-    } else if (preset === 'dry') {
-      setMoisture(12.0);
-      setTemp(35.0);
-      setHumidity(35.0);
-      setRainProb(0.0);
-    } else if (preset === 'rain') {
-      setMoisture(22.0);
-      setTemp(25.0);
-      setHumidity(80.0);
-      setRainProb(75.0);
-    } else {
-      setMoisture(32.0);
-      setTemp(27.0);
-      setHumidity(60.0);
-      setRainProb(15.0);
-    }
-  };
+  const { t, speakText } = useKrishiPals();
+  const [moisture, setMoisture] = useState(30.0);
+  const [temp, setTemp] = useState(32.0);
+  const [humidity, setHumidity] = useState(40.0);
+  const [rainProb, setRainProb] = useState(10.0);
 
   const handleRunSimulation = () => {
     onSimulate({
@@ -49,116 +28,115 @@ export default function FarmerWhatIfSimulator({ onSimulate, loading }: FarmerWha
       humidity: humidity,
       rain_probability: rainProb,
     });
+    speakText(`Running simulation for ${moisture}% soil moisture and ${temp}°C temperature.`);
+  };
+
+  const handleReset = () => {
+    setMoisture(38.4);
+    setTemp(27.4);
+    setHumidity(48.0);
+    setRainProb(15.0);
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+    <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-lg mb-1">
-            <span>🧪</span> Interactive Farmer What-If Tool
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold">
+            <Sliders className="w-4 h-4" />
           </div>
-          <h3 className="text-base font-bold text-slate-800 tracking-tight">
-            Test AI Irrigation Decision Live
-          </h3>
+          <div>
+            <h3 className="font-black text-sm text-slate-900 dark:text-white">
+              {t.whatIfSimulatorTitle}
+            </h3>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+              Adjust sliders to test how AI water predictions change under heatwaves or dry spells
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 text-xs flex-wrap">
-          <span className="text-slate-400">Quick Presets:</span>
-          <button
-            type="button"
-            onClick={() => handleApplyPreset('dry')}
-            className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold rounded-lg border border-amber-200"
-          >
-            ☀️ Hot & Dry
-          </button>
-          <button
-            type="button"
-            onClick={() => handleApplyPreset('rain')}
-            className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-800 font-semibold rounded-lg border border-blue-200"
-          >
-            🌧️ Rain Incoming
-          </button>
-          <button
-            type="button"
-            onClick={() => handleApplyPreset('optimal')}
-            className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold rounded-lg border border-emerald-200"
-          >
-            🌱 Moist Soil
-          </button>
-        </div>
+
+        <button
+          onClick={handleReset}
+          className="text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 flex items-center gap-1"
+        >
+          <RefreshCw className="w-3 h-3" />
+          <span>{t.resetDefaults}</span>
+        </button>
       </div>
 
       {/* Sliders Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Soil Moisture Slider */}
-        <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-2">
-          <div className="flex justify-between items-center text-xs font-bold text-slate-700">
-            <span>💧 Soil Moisture</span>
-            <span className="text-emerald-700 text-sm">{moisture}%</span>
-          </div>
-          <input
-            type="range"
-            min="5"
-            max="60"
-            step="1"
-            value={moisture}
-            onChange={(e) => setMoisture(parseFloat(e.target.value))}
-            className="w-full accent-emerald-600 cursor-pointer"
-          />
-          <div className="text-[11px] text-slate-400 flex justify-between">
-            <span>5% (Extremely Dry)</span>
-            <span>60% (Wet)</span>
-          </div>
-        </div>
-
-        {/* Temperature Slider */}
-        <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-2">
-          <div className="flex justify-between items-center text-xs font-bold text-slate-700">
-            <span>🌡️ Air Temperature</span>
-            <span className="text-amber-700 text-sm">{temp}°C</span>
-          </div>
-          <input
-            type="range"
-            min="15"
-            max="48"
-            step="1"
-            value={temp}
-            onChange={(e) => setTemp(parseFloat(e.target.value))}
-            className="w-full accent-amber-600 cursor-pointer"
-          />
-          <div className="text-[11px] text-slate-400 flex justify-between">
-            <span>15°C (Cool)</span>
-            <span>48°C (Extreme Heat)</span>
-          </div>
-        </div>
-
-        {/* Humidity Slider */}
-        <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-2">
-          <div className="flex justify-between items-center text-xs font-bold text-slate-700">
-            <span>💨 Air Humidity</span>
-            <span className="text-blue-700 text-sm">{humidity}%</span>
+        <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 space-y-1.5">
+          <div className="flex justify-between text-xs font-bold text-slate-800 dark:text-slate-200">
+            <span>💧 Soil Moisture (%)</span>
+            <span className="text-blue-600 dark:text-blue-400 font-black">{moisture}%</span>
           </div>
           <input
             type="range"
             min="10"
+            max="80"
+            step="1"
+            value={moisture}
+            onChange={(e) => setMoisture(parseFloat(e.target.value))}
+            className="w-full accent-blue-600 cursor-pointer"
+          />
+          <div className="flex justify-between text-[10px] text-slate-400">
+            <span>Dry (10%)</span>
+            <span>Optimal (40%)</span>
+            <span>Wet (80%)</span>
+          </div>
+        </div>
+
+        {/* Temperature Slider */}
+        <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 space-y-1.5">
+          <div className="flex justify-between text-xs font-bold text-slate-800 dark:text-slate-200">
+            <span>🌡️ Temperature (°C)</span>
+            <span className="text-amber-600 dark:text-amber-400 font-black">{temp}°C</span>
+          </div>
+          <input
+            type="range"
+            min="15"
+            max="45"
+            step="0.5"
+            value={temp}
+            onChange={(e) => setTemp(parseFloat(e.target.value))}
+            className="w-full accent-amber-500 cursor-pointer"
+          />
+          <div className="flex justify-between text-[10px] text-slate-400">
+            <span>Cool (15°C)</span>
+            <span>Normal (28°C)</span>
+            <span>Heatwave (45°C)</span>
+          </div>
+        </div>
+
+        {/* Humidity Slider */}
+        <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 space-y-1.5">
+          <div className="flex justify-between text-xs font-bold text-slate-800 dark:text-slate-200">
+            <span>💨 Air Humidity (%)</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-black">{humidity}%</span>
+          </div>
+          <input
+            type="range"
+            min="15"
             max="95"
             step="1"
             value={humidity}
             onChange={(e) => setHumidity(parseFloat(e.target.value))}
-            className="w-full accent-blue-600 cursor-pointer"
+            className="w-full accent-emerald-500 cursor-pointer"
           />
-          <div className="text-[11px] text-slate-400 flex justify-between">
-            <span>10% (Dry Air)</span>
-            <span>95% (Humid)</span>
+          <div className="flex justify-between text-[10px] text-slate-400">
+            <span>Arid (15%)</span>
+            <span>Humid (95%)</span>
           </div>
         </div>
 
         {/* Rain Probability Slider */}
-        <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-2">
-          <div className="flex justify-between items-center text-xs font-bold text-slate-700">
-            <span>🌧️ Rain Forecast</span>
-            <span className="text-purple-700 text-sm">{rainProb}%</span>
+        <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 space-y-1.5">
+          <div className="flex justify-between text-xs font-bold text-slate-800 dark:text-slate-200">
+            <span>🌧️ Rain Forecast (%)</span>
+            <span className="text-sky-600 dark:text-sky-400 font-black">{rainProb}%</span>
           </div>
           <input
             type="range"
@@ -167,30 +145,27 @@ export default function FarmerWhatIfSimulator({ onSimulate, loading }: FarmerWha
             step="5"
             value={rainProb}
             onChange={(e) => setRainProb(parseFloat(e.target.value))}
-            className="w-full accent-purple-600 cursor-pointer"
+            className="w-full accent-sky-500 cursor-pointer"
           />
-          <div className="text-[11px] text-slate-400 flex justify-between">
-            <span>0% (No Rain)</span>
-            <span>100% (Heavy Rain)</span>
+          <div className="flex justify-between text-[10px] text-slate-400">
+            <span>No Rain (0%)</span>
+            <span>Heavy Rain (100%)</span>
           </div>
         </div>
       </div>
 
-      {/* Trigger Button */}
-      <div className="flex justify-end pt-1">
-        <button
-          type="button"
-          onClick={handleRunSimulation}
-          disabled={loading}
-          className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-2"
-        >
-          {loading ? (
-            <><span>⏳</span> Calculating ML Prediction...</>
-          ) : (
-            <><span>🚀</span> Simulate AI Irrigation Decision</>
-          )}
-        </button>
-      </div>
+      {/* Execute Button */}
+      <button
+        onClick={handleRunSimulation}
+        disabled={loading}
+        className="w-full py-3 bg-gradient-to-r from-purple-700 via-indigo-700 to-emerald-700 hover:from-purple-800 hover:to-emerald-800 text-white font-extrabold text-xs rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2"
+      >
+        {loading ? (
+          <><span>⏳</span> Running Physics AI Engine...</>
+        ) : (
+          <><Sparkles className="w-4 h-4 text-purple-200" /> {t.simulateScenario}</>
+        )}
+      </button>
     </div>
   );
 }

@@ -5,7 +5,7 @@ from pydantic import Field
 
 class Settings(BaseSettings):
     # API & Core
-    PROJECT_NAME: str = "AI-Powered Smart Irrigation System"
+    PROJECT_NAME: str = "KrishiPals — AI Smart Irrigation Ecosystem"
     VERSION: str = "0.1.0"
     API_V1_STR: str = "/api"
     ENVIRONMENT: str = "development"
