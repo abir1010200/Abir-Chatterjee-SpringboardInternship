@@ -111,6 +111,7 @@ def register_composite_field(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Registration failed: {str(e)}")
 
 # --- Field CRUD ---
+@router.get("", response_model=List[FieldResponse])
 @router.get("/", response_model=List[FieldResponse])
 def list_fields(db: Session = Depends(get_db)):
     """List all registered fields with active crops and sensors."""

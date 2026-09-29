@@ -27,12 +27,18 @@ def seed_db():
             return
 
         logger.info("Seeding demo data...")
-        # 1. Create Demo Farmer
+        try:
+            from backend.app.core.security import hash_password, DEFAULT_DEMO_PASSWORD
+            demo_pw_hash = hash_password(DEFAULT_DEMO_PASSWORD)
+        except Exception:
+            demo_pw_hash = None
+
         farmer = Farmer(
             name="Rajesh Patel",
             email="rajesh.patel@agrofarm.io",
             phone="+91-98765-43210",
-            address="Plot 42, Green Valley Agricultural Zone, Pune, India"
+            address="Plot 42, Green Valley Agricultural Zone, Pune, India",
+            password_hash=demo_pw_hash
         )
         db.add(farmer)
         db.flush()

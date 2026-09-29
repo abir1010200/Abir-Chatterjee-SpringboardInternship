@@ -14,8 +14,8 @@ export default function BottomNav() {
     { href: '/', label: 'Home', icon: Home },
     { href: '/fields', label: t.fields, icon: Sprout },
     { href: '/schedule', label: t.schedule, icon: Calendar },
+    { href: '/outputs', label: 'Outputs', icon: BarChart3 },
     { href: '/history', label: t.history, icon: History },
-    { href: '/analytics', label: t.trends, icon: BarChart3 },
     { href: '/profile', label: t.profile, icon: User },
   ];
 

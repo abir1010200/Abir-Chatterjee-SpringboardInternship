@@ -134,6 +134,7 @@ def get_sensor_readings(
     readings = query.order_by(SensorReading.timestamp.desc()).limit(limit).all()
     return readings
 
+@router.get("", response_model=List[dict])
 @router.get("/", response_model=List[dict])
 def list_sensors(db: Session = Depends(get_db)):
     """

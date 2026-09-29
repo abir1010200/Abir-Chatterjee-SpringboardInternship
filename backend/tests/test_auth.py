@@ -2,7 +2,47 @@ import pytest
 from fastapi.testclient import TestClient
 from backend.main import app
 
+from backend.app.core.security import hash_password
+from backend.app.db.session import SessionLocal
+from backend.app.models.farmer import Farmer
+
 client = TestClient(app)
+
+@pytest.fixture(autouse=True)
+def setup_demo_farmers():
+    db = SessionLocal()
+    try:
+        # Ensure Rajesh Patel exists
+        rajesh = db.query(Farmer).filter(Farmer.email == "rajesh.patel@agrofarm.io").first()
+        if not rajesh:
+            rajesh = Farmer(
+                name="Rajesh Patel",
+                email="rajesh.patel@agrofarm.io",
+                phone="+91-98765-43210",
+                address="Plot 42, Green Valley Agricultural Zone, Pune, India",
+                password_hash=hash_password("krishi123")
+            )
+            db.add(rajesh)
+        else:
+            rajesh.password_hash = hash_password("krishi123")
+
+        # Ensure Amit Sharma exists
+        amit = db.query(Farmer).filter(Farmer.email == "amit.sharma@farmtech.io").first()
+        if not amit:
+            amit = Farmer(
+                name="Amit Sharma",
+                email="amit.sharma@farmtech.io",
+                phone="+91-9988776655",
+                address="Sector 9, Nashik Agrozones",
+                password_hash=hash_password("krishi123")
+            )
+            db.add(amit)
+        else:
+            amit.password_hash = hash_password("krishi123")
+
+        db.commit()
+    finally:
+        db.close()
 
 def test_login_demo_farmer_success():
     response = client.post(

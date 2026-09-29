@@ -56,8 +56,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount API Routers
+# Mount API Routers (support both /api/v1 and legacy /api prefix)
 app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(api_router, prefix="/api")
 
 @app.get("/")
 def root():
